@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Prog2 {
@@ -12,6 +13,8 @@ public class Prog2 {
 	private RandomAccessFile bucketBin;
 	private RandomAccessFile dataBin;
 	private int bucketSize = 2;
+	private int bucketFileLineSize = 12;
+	private int[] fieldLengths;
 
 	/*
 	 * init) Check if the bin file in the input exists, if not then we have an
@@ -117,6 +120,7 @@ public class Prog2 {
 		}
 
 		this.readInData();
+		this.tempQuery();
 		this.beginQuerying();
 		this.closeFiles();
 
@@ -162,11 +166,11 @@ public class Prog2 {
 	 * 
 	 *---------------------------------------------------------------------*/
 	private void setChildrenOffsets(HashNode node, long start, long end) {
-		if ((this.bucketSize * 8 * 10) != (end - start)) {
+		if ((this.bucketSize * 12 * 10) != (end - start)) {
 			System.out.println("ERROR: Invalid start and end in setChildrenOffsets");
 			System.exit(-1);
 		}
-		long step = this.bucketSize * 8;
+		long step = this.bucketSize * 12;
 		for (int i = 0; i < 10; i++) {
 			// For each of the 10 offsets in the binary file
 			// assign those offset to the given HashNode
@@ -185,7 +189,7 @@ public class Prog2 {
 	 * 
 	 * Purpose:	Initialize the RandomAccessFile used to store the hash bucket 
 	 * 			index-offset pairs. The file is initialized to 
-	 * 			bucketSize [rows per bucket] * 10 [buckets] * 8 [bytes per row]
+	 * 			bucketSize [rows per bucket] * 10 [buckets] * 12 [bytes per row]
 	 * 
 	 * Pre-condition:	?
 	 * 
@@ -215,7 +219,7 @@ public class Prog2 {
 
 		try {
 			binFile = new RandomAccessFile("bucket.bin", "rw");
-			binFile.setLength(bucketSize * 10 * 8); // Preallocate initial size
+			binFile.setLength(bucketSize * 10 * 12); // Preallocate initial size
 			return binFile;
 		} catch (FileNotFoundException e) {
 			System.out.println("ERROR: FileNotFoundException - Could not generate bucket binary file");
@@ -293,7 +297,7 @@ public class Prog2 {
 
 		// Read backwards for the number of fields to get the length of each field,
 		// the data length, and the length of each line
-		int[] fieldLengths = getFieldLengthsArray(totalBytes, numberOfFields);
+		this.fieldLengths = getFieldLengthsArray(totalBytes, numberOfFields);
 
 		// Data length is total bytes minus int marking number of fields
 		// minus number of ints used for field lengths
@@ -360,17 +364,35 @@ public class Prog2 {
 		HashNode currentNode = root.getChild(idDigit);
 //		System.out.println(String.format("From id <%d> I got hash node <%s>", id, currentNode.toString()));
 		while (!atLeafNode) {
-			if (currentNode.isLeaf()) {
+			if (currentNode.isLeaf()) { // If we reached a leaf node stop iterating
 				atLeafNode = true;
 //				System.out.println(String.format("At leaf node for id <%s> and digit <%s>", id, idDigit));
-			} else {
+			} else { // Otherwise move to the next digit in the runner id and the next level of the
+						// tree
 //				System.out.println("Not at leaf node ");
 				// STILL NEED TO IMPLEMENT THIS
 			}
-			
+
 			atLeafNode = true;
 		}
-		
+
+		if (currentNode.getDataCount() == this.bucketSize) { // Resize if the tree if full
+			this.resizeNode();
+
+		}
+		long positionInBinFile = currentNode.getOffset() + (12 * currentNode.getDataCount());
+
+		System.out.println(String.format("Adding id <%s> at position <%s>", id, positionInBinFile));
+
+		try {
+			this.bucketBin.seek(positionInBinFile);
+			this.bucketBin.writeInt(id);
+			this.bucketBin.writeLong(positionInDataBinFile);
+			currentNode.incrDataCount();
+		} catch (IOException e) {
+			System.out.println("ERROR: Could not write to bucket binary file");
+			System.exit(-1);
+		}
 		// Start at the end of the runner id and find that value in the
 		// First level of the tree.
 		// If that hashnode has bucketSize elements then the bucket is full
@@ -380,6 +402,151 @@ public class Prog2 {
 		// Then we write the runner id and positionInDataBin file to the hash
 		// bucket file
 		// If the hashbucket is full we call resize on the node
+
+	}
+
+	private void tempQuery() {
+		// Initialize the scanner and necessary variables
+		Scanner scanner = new Scanner(System.in);
+		boolean looping = true;
+		String query;
+		int runnerId = 0;
+		boolean validInt = true;
+		System.out.println("\nEnter a runnerId to search, or enter -1 to exit the program");
+		// Loop until user enters -1
+		while (looping) {
+			query = scanner.nextLine();
+
+			try {
+				// Parse the int from the query or exit if it fails
+				try {
+					runnerId = Integer.parseInt(query);
+					validInt = true;
+				} catch (Exception e) {
+					System.out.println("Please enter an integer");
+					validInt = false;
+				}
+				if (validInt) {
+					if (runnerId == -1) {
+						looping = false;
+					} else {
+						// CHANGE THIS SECTION
+						int temp = runnerId;
+						int digit = temp % 10;
+						int length = query.length();
+						boolean found = false;
+						HashNode currentNode = root.getChild(digit);
+						while (!found) {
+							// If we reached a leaf node then we just 
+							// print that node
+							System.out.println("In query inner loop");
+							// If we reached the end of the query but not a leaf 
+							// node then we just print all leaf nodes attached
+							if (length == 0) {
+								found = true;
+								this.printNodeResults(runnerId, currentNode);
+							}
+							if (currentNode.isLeaf()) {
+								found = true;
+								this.printNodeResults(runnerId, currentNode);
+
+							} 
+							
+							
+							
+							temp = temp / 10;
+							digit = temp % 10;
+							length --;
+							
+						}
+						///////////
+					}
+				}
+
+			} catch (Exception e) {
+				System.out.println("Record not found");
+//				e.printStackTrace();
+			}
+
+		}
+		scanner.close();
+
+	}
+
+	private void printNodeResults(int query, HashNode node) {
+		
+		if (node.isLeaf()) {
+			this.printNodeResultsHelper(query, node);
+		}
+		
+		
+	}
+
+	private void printNodeResultsHelper(int query, HashNode node) {
+		ArrayList<ValueOffsetPair> listOfResults = new ArrayList<ValueOffsetPair>(100);
+//		long[] listOfRes = new long[100];
+		ArrayList<Long> listOfRes = new ArrayList<Long>(100);
+		int k = 0; 
+		int id;
+		String queryString = String.valueOf(query);
+		String idString;
+		long indexInDataBin;
+		long offset = node.getOffset();
+		// Print each 
+		for (int i = 0; i < node.getDataCount(); i ++) {
+			System.out.println("Loop A");
+			try {
+				this.bucketBin.seek(offset);
+				id = this.bucketBin.readInt();
+//				offset += 4;
+				indexInDataBin = this.bucketBin.readLong();
+				idString = String.valueOf(id);
+//				System.out.println("queryString: " + queryString);
+//				System.out.println("idString: " + idString);
+
+				if (idString.endsWith(queryString)) {
+//					listOfResults.add(new ValueOffsetPair(id, indexInDataBin));
+//					listOfRes[k] = indexInDataBin;
+					listOfRes.add(indexInDataBin);
+					k ++;
+				}
+				
+//				System.out.println(String.format("[%s][%s]", id, indexInDataBin));
+				
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			offset += this.bucketFileLineSize;
+			
+		}
+		
+		
+		this.printPositionArray(listOfRes);
+		
+	}
+	
+	private void printPositionArray(ArrayList<Long> arr) {
+		String[] lineStringArr = new String[this.fieldLengths.length];
+		for (int i = 0; i < arr.size(); i ++) {
+			System.out.println("Loop B - " + arr.size());
+
+			this.readBinFileLineIntoArrayList(this.fieldLengths, lineStringArr, arr.get(i));
+			for (int k = 0; k < lineStringArr.length; k ++) {
+				
+
+				System.out.print(String.format("[%s]", lineStringArr[k]));
+				
+			}
+			System.out.print("Loop C");
+			System.out.println();
+		}
+	}
+	
+	
+	private void resizeNode() {
+		// TODO Auto-generated method stub
 
 	}
 
@@ -457,7 +624,7 @@ public class Prog2 {
 	|  Returns:  void
 	*-------------------------------------------------------------------*/
 	private void readBinFileLineIntoArrayList(int[] fieldLengths, String[] lineStringList, long position) {
-		System.out.println(String.format("Position: <%s>", position));
+//		System.out.println(String.format("Position: <%s>", position));
 		try {
 			this.dataBin.seek(position);
 			byte[] lineBytes = null;

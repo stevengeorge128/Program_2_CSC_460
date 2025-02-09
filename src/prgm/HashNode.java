@@ -12,7 +12,7 @@ public class HashNode {
 	private int value;
 	private Optional<ArrayList<HashNode>> children = Optional.empty();
 	private int currentDataCount = 0;
-	private ArrayList<indexOffsetPair> indexOffsetPairArray = null; // Probably do not want to use this. Actually what I am saying is
+//	private ArrayList<indexOffsetPair> indexOffsetPairArray = null; // Probably do not want to use this. Actually what I am saying is
 	// that this should only exists for resizing.
 
 	/*---------------------------------------------------------------------
@@ -134,6 +134,18 @@ public class HashNode {
 	
 	public boolean isLeaf() {
 		return this.children.isEmpty();
+	}
+	
+	public int getDataCount() {
+		return this.currentDataCount;
+	}
+	
+	public long getOffset() {
+		return this.offsetStart.get();
+	}
+	
+	public void incrDataCount() {
+		this.currentDataCount ++ ;
 	}
 
 }

@@ -134,8 +134,8 @@ public class Prog1B {
 			System.out.println(fieldLengths[j]);
 		}
 		int lineLengthBytes = getLineLengthInBytes(fieldLengths);
-		System.out
-		.println(String.format("There are <%s> fields with line length <%s>", fieldLengths.length, lineLengthBytes));
+		System.out.println(
+				String.format("There are <%s> fields with line length <%s>", fieldLengths.length, lineLengthBytes));
 
 		handleExpectedPrintedLines(binFile, fieldLengths, lineLengthBytes, dataLengthExcludingHeaders);
 
@@ -391,14 +391,14 @@ public class Prog1B {
 
 			try {
 				// Parse the int from the query or exit if it fails
-					try {
+				try {
 					runnerId = Integer.parseInt(query);
 					validInt = true;
-					} catch (Exception e) {
-						System.out.println("Please enter an integer");
-						validInt = false;
-					}
-					if (validInt) {
+				} catch (Exception e) {
+					System.out.println("Please enter an integer");
+					validInt = false;
+				}
+				if (validInt) {
 					if (runnerId == -1) {
 						looping = false;
 					} else {
@@ -422,8 +422,8 @@ public class Prog1B {
 						// Print the result
 						System.out.println(
 								"[" + result[0] + "][" + nameToPrint + "][" + result[3] + "][" + timeToPrint + "]");
-					}}
-				
+					}
+				}
 
 			} catch (Exception e) {
 				System.out.println("Record not found");
