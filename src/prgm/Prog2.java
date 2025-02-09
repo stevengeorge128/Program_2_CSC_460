@@ -78,7 +78,7 @@ public class Prog2 {
 	 * 
 	 *---------------------------------------------------------------------*/
 	private void start() {
-		
+
 		Scanner scanner = new Scanner(System.in);
 		String filepath = scanner.nextLine();
 		this.dataBin = this.initializeDataBinFile(filepath);
@@ -95,8 +95,7 @@ public class Prog2 {
 		// Root node initialized with 10 children who do not have file pointers
 		// nor children
 		this.root = this.initializeRootNode();
-		
-		
+
 		// Set each child to have an offset position in the bin file
 		try {
 			this.setChildrenOffsets(this.root, 0, this.bucketBin.length());
@@ -105,24 +104,23 @@ public class Prog2 {
 			System.exit(-1);
 		}
 
-		
-		
 		if (this.root == null || this.bucketBin == null || this.dataBin == null) {
 			System.out.println("ERROR: Failure to initialize");
 			System.exit(-1);
 		}
-		
+
 		System.out.println("Testing tree initialization");
-		
-		
+		System.out.println("Root: " + this.root.toString());
+		for (int i = 0; i < 10; i++) {
+			HashNode temp = root.getChild(i);
+			System.out.println("\t" + temp.toString());
+		}
+
 		this.readInData();
 		this.beginQuerying();
 		this.closeFiles();
 
-
 	}
-
-
 
 	/*---------------------------------------------------------------------
 	 * Method 	initializeRootNode
@@ -145,7 +143,7 @@ public class Prog2 {
 		rootNode.createChildren();
 		return rootNode;
 	}
-	
+
 	/*---------------------------------------------------------------------
 	 * Method 	setChildrenOffsets
 	 * 
@@ -200,8 +198,7 @@ public class Prog2 {
 	 * 
 	 *---------------------------------------------------------------------*/
 	private RandomAccessFile initializeBucketBinaryFile() {
-		
-		
+
 		File binFileRef = null; // Used to check if bin file already exists and delete it
 		RandomAccessFile binFile = null;
 		// Check for and delete existing version
@@ -215,7 +212,7 @@ public class Prog2 {
 		}
 
 		// Create and return the bin file
-		
+
 		try {
 			binFile = new RandomAccessFile("bucket.bin", "rw");
 			binFile.setLength(bucketSize * 10 * 8); // Preallocate initial size
@@ -274,10 +271,146 @@ public class Prog2 {
 	 * 
 	 *---------------------------------------------------------------------*/
 	private void readInData() {
-		// TODO Auto-generated method stub
+		// Get the number of bytes
+		long numberOfRecords = 0;
+		try {
+			numberOfRecords = this.dataBin.length();
+		} catch (IOException e) {
+			System.out.println("ERROR: Could not read binary file length");
+			System.exit(-1);
+		}
 
+		// Move to the end of the file and read the last byte
+		int numberOfFields = -1;
+		try {
+			this.dataBin.seek(numberOfRecords - 4);
+			numberOfFields = this.dataBin.readInt();
+
+		} catch (IOException e) {
+			System.out.println("ERROR: Could not read last byte of binary file");
+			System.exit(-1);
+		}
+
+		// Read backwards for the number of fields to get the length of each field,
+		// the data length, and the length of each line
+		int[] fieldLengths = getFieldLengthsArray(numberOfRecords, numberOfFields);
+		long dataLengthExcludingHeaders = numberOfRecords - 1 - numberOfFields;
+		int lineLength = 0;
+		for (int j = 0; j < fieldLengths.length; j++) {
+			lineLength += fieldLengths[j];
+		}
+		System.out
+				.println(String.format("There are <%s> fields with line length <%s>", fieldLengths.length, lineLength));
+		
+		String[] lineStringList = new String[fieldLengths.length];
+		for (int l = 0; l < dataLengthExcludingHeaders; l += lineLength){
+			this.readBinFileLineIntoArrayList(fieldLengths, lineStringList, l);
+			for (int k = 0; k < lineStringList.length; k ++) {
+				System.out.print(String.format("[%s]", lineStringList[k]));
+			}
+			System.out.println();
+		}
 	}
 
+	/*---------------------------------------------------------------------
+	|  Method getFieldLengthsArray
+	|
+	|  Purpose:	Read the binary file backwards from the last line, where 
+	|			the last 4 bytes of the file is the number of fields, allowing
+	|			this method to know the number of bytes to read backwards
+	|			to get the length of each field. The lengths of each field are 
+	|			placed into an int[] array. 
+	|
+	|  Pre-condition:	binFile is opened, numberOfRecords is the number 
+	|					of bytes in the entire file, and numberOfFields
+	|					is the last int of the file which tells this function
+	|					how many times to iterate
+	|
+	|  Post-condition:	The byte lengths of each field is read into an int[] array
+	|					and returned. Furthermore, -1 is stored in the array 
+	|					for fields that are integers.
+	|
+	|  Parameters:
+	|			binFile -- opened binary file to use seek on
+	|			numberOfRecords - Number of bytes in the file
+	|			numberOfFields - Number of ints to rread from the last line
+	|
+	|  Returns:  int[] array of field lengths 
+	*-------------------------------------------------------------------*/
+	private int[] getFieldLengthsArray(long numberOfRecords, int numberOfFields) {
+		int[] fieldLengths = new int[numberOfFields];
+		int i = numberOfFields;
+		long pos = numberOfRecords - 8;
+		while (i > 0) {
+
+			try {
+				this.dataBin.seek(pos);
+				int temp = this.dataBin.readInt();
+				temp = (temp == -1) ? (4) : temp;
+				fieldLengths[i - 1] = temp;
+			} catch (IOException e) {
+				System.out.println("ERROR: Could not read field lengths from binary file");
+				System.exit(-1);
+			}
+
+			pos -= 4;
+			i--;
+		}
+		return fieldLengths;
+	}
+
+	/*---------------------------------------------------------------------
+	|  Method readBinFileLineIntoArrayList
+	|
+	|  Purpose:	Take the bin file and an array to place the contents of the bin
+	|			file into and read the number of bytes equivalent to the 
+	|			lengths in fieldLength int[] array. If a -1 in field lengths 
+	|			then 4 bytes are read, else the number of bytes in field lengths is read.
+	|			This data is either read using readInt() or by creating 
+	|			a byte array and converting it to a String. 
+	|
+	|  Pre-condition:	The binary file is open and lineStringList has been
+	|					establish such that each field in the line can 
+	|					be stored in it.
+	|
+	|  Post-condition:	lineStringList is updated to contain each field 
+	|					of the line given by position. 
+	|
+	|  Parameters:
+	|			binFile - the opened RandomAccessFile to read from
+	|			fieldLengths - an int array containing the length of each field in 
+	|				the line, with -1 representing ints, and all other values 
+	|				representing strings.
+	|			lineStringList - The established array to store the line info in
+	|			position - a long marking the byte location of the line to read
+	|				from in the file.
+	|
+	|  Returns:  void
+	*-------------------------------------------------------------------*/
+	private  void readBinFileLineIntoArrayList(int[] fieldLengths,
+			String[] lineStringList, long position) {
+		try {
+			this.dataBin.seek(position);
+			byte[] lineBytes = null;
+			for (int k = 0; k < fieldLengths.length; k++) {
+				if (fieldLengths[k] == -1) {
+					lineStringList[k] = Integer.toString(this.dataBin.readInt());
+				} else {
+					lineBytes = new byte[fieldLengths[k]];
+					this.dataBin.readFully(lineBytes);
+					lineStringList[k] = new String(lineBytes);
+				}
+
+			}
+
+		} catch (Exception e) {
+			System.out.println("ERROR: Could not parse the binary file line");
+			e.printStackTrace();
+			System.exit(-1);
+
+		}
+	}
+	
 	/*---------------------------------------------------------------------
 	 * Method 	beginQuerying
 	 * 
