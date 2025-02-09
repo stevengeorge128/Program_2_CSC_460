@@ -131,5 +131,9 @@ public class HashNode {
 				this.offsetStart.get());
 
 	}
+	
+	public boolean isLeaf() {
+		return this.children.isEmpty();
+	}
 
 }

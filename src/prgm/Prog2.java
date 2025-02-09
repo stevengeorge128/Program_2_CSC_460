@@ -272,9 +272,9 @@ public class Prog2 {
 	 *---------------------------------------------------------------------*/
 	private void readInData() {
 		// Get the number of bytes
-		long numberOfRecords = 0;
+		long totalBytes = 0;
 		try {
-			numberOfRecords = this.dataBin.length();
+			totalBytes = this.dataBin.length();
 		} catch (IOException e) {
 			System.out.println("ERROR: Could not read binary file length");
 			System.exit(-1);
@@ -283,7 +283,7 @@ public class Prog2 {
 		// Move to the end of the file and read the last byte
 		int numberOfFields = -1;
 		try {
-			this.dataBin.seek(numberOfRecords - 4);
+			this.dataBin.seek(totalBytes - 4);
 			numberOfFields = this.dataBin.readInt();
 
 		} catch (IOException e) {
@@ -293,23 +293,94 @@ public class Prog2 {
 
 		// Read backwards for the number of fields to get the length of each field,
 		// the data length, and the length of each line
-		int[] fieldLengths = getFieldLengthsArray(numberOfRecords, numberOfFields);
-		long dataLengthExcludingHeaders = numberOfRecords - 1 - numberOfFields;
+		int[] fieldLengths = getFieldLengthsArray(totalBytes, numberOfFields);
+
+		// Data length is total bytes minus int marking number of fields
+		// minus number of ints used for field lengths
+		long dataLengthExcludingHeaders = totalBytes - 4 - numberOfFields * 4;
 		int lineLength = 0;
 		for (int j = 0; j < fieldLengths.length; j++) {
-			lineLength += fieldLengths[j];
+//			System.out.println(fieldLengths[j]);
+			lineLength += fieldLengths[j] == -1 ? 4 : fieldLengths[j];
 		}
+
+		// All this does is print
 		System.out
 				.println(String.format("There are <%s> fields with line length <%s>", fieldLengths.length, lineLength));
-		
+
 		String[] lineStringList = new String[fieldLengths.length];
-		for (int l = 0; l < dataLengthExcludingHeaders; l += lineLength){
+		System.out.println(String.format("Data length excluding headers is <%s>", dataLengthExcludingHeaders));
+		for (long l = 0; l < dataLengthExcludingHeaders; l += lineLength) {
 			this.readBinFileLineIntoArrayList(fieldLengths, lineStringList, l);
-			for (int k = 0; k < lineStringList.length; k ++) {
-				System.out.print(String.format("[%s]", lineStringList[k]));
+//			for (int k = 0; k < lineStringList.length; k ++) {
+//				System.out.print(String.format("[%s]", lineStringList[k]));
+//			}
+//			System.out.println();
+			if (lineStringList[0].length() != 0) {
+				this.addToTree(lineStringList, l);
 			}
-			System.out.println();
 		}
+
+		//////////////////
+
+//		// Next we iterate through each line of the file and add it to the tree
+//		for (int m = 0; m < dataLengthExcludingHeaders; m += lineLength) {
+//			this.addLineToTree
+//		}
+	}
+
+	/*---------------------------------------------------------------------
+	 * Method	addToTree
+	 * 
+	 * Purpose: Take a line of the data binary file and its position in the 
+	 * 			the data binary file and iterate through the tree to find 
+	 * 			the location where the runner id should be added to the hash
+	 * 			bucket file
+	 * 
+	 * Pre-condition: 	
+	 * 
+	 * Post-condition:	
+	 * 
+	 * Parameters:	
+	 * 
+	 * Returns: 
+	 * 
+	 *---------------------------------------------------------------------*/
+	private void addToTree(String[] lineStringList, long positionInDataBinFile) {
+		// Parse the runner id into an integer. Exit if that fails
+		int id;
+		try {
+			id = Integer.parseInt(lineStringList[0]);
+		} catch (Exception e) {
+			System.out.println("ERROR: Runner id not an int");
+			return;
+		}
+		boolean atLeafNode = false;
+		int idDigit = id % 10;
+		HashNode currentNode = root.getChild(idDigit);
+//		System.out.println(String.format("From id <%d> I got hash node <%s>", id, currentNode.toString()));
+		while (!atLeafNode) {
+			if (currentNode.isLeaf()) {
+				atLeafNode = true;
+//				System.out.println(String.format("At leaf node for id <%s> and digit <%s>", id, idDigit));
+			} else {
+//				System.out.println("Not at leaf node ");
+				// STILL NEED TO IMPLEMENT THIS
+			}
+			
+			atLeafNode = true;
+		}
+		
+		// Start at the end of the runner id and find that value in the
+		// First level of the tree.
+		// If that hashnode has bucketSize elements then the bucket is full
+		// If not full we skip to the correct position in the hash bucket file
+		// using the number of elements in the hashnode times the length of
+		// each line and starting at the offset of the bucket/
+		// Then we write the runner id and positionInDataBin file to the hash
+		// bucket file
+		// If the hashbucket is full we call resize on the node
+
 	}
 
 	/*---------------------------------------------------------------------
@@ -345,9 +416,7 @@ public class Prog2 {
 
 			try {
 				this.dataBin.seek(pos);
-				int temp = this.dataBin.readInt();
-				temp = (temp == -1) ? (4) : temp;
-				fieldLengths[i - 1] = temp;
+				fieldLengths[i - 1] = this.dataBin.readInt();
 			} catch (IOException e) {
 				System.out.println("ERROR: Could not read field lengths from binary file");
 				System.exit(-1);
@@ -387,8 +456,8 @@ public class Prog2 {
 	|
 	|  Returns:  void
 	*-------------------------------------------------------------------*/
-	private  void readBinFileLineIntoArrayList(int[] fieldLengths,
-			String[] lineStringList, long position) {
+	private void readBinFileLineIntoArrayList(int[] fieldLengths, String[] lineStringList, long position) {
+		System.out.println(String.format("Position: <%s>", position));
 		try {
 			this.dataBin.seek(position);
 			byte[] lineBytes = null;
@@ -410,7 +479,7 @@ public class Prog2 {
 
 		}
 	}
-	
+
 	/*---------------------------------------------------------------------
 	 * Method 	beginQuerying
 	 * 
