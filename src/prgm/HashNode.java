@@ -12,6 +12,7 @@ public class HashNode {
 	private int value;
 	private Optional<ArrayList<HashNode>> children = Optional.empty();
 	private int currentDataCount = 0;
+	private int level = -1;
 //	private ArrayList<indexOffsetPair> indexOffsetPairArray = null; // Probably do not want to use this. Actually what I am saying is
 	// that this should only exists for resizing.
 
@@ -112,23 +113,23 @@ public class HashNode {
 	public String toString() {
 		if (this.children.isEmpty()) { // If no children 
 			if (this.offsetStart.isEmpty()) { // And if not offset
-				return String.format("value: %s, children: %s, offsets: %s, isLeaf: %s", this.value, "not init",
-						"not init", this.isLeaf());
+				return String.format("value: %s, children: %s, offsets: %s, isLeaf: %s, level: %s", this.value, "not init",
+						"not init", this.isLeaf(), this.level);
 
 			} else {
-				return String.format("value: %s, children: %s, offsets: %s, isLeaf: %s", this.value, "not init",
-						this.offsetStart.get(), this.isLeaf());
+				return String.format("value: %s, children: %s, offsets: %s, isLeaf: %s, level: %s", this.value, "not init",
+						this.offsetStart.get(), this.isLeaf(), this.level);
 
 			}
 		} else {
 			if (this.offsetStart.isEmpty()) {
-				return String.format("value: %s, children: %s, offsets: %s, isLeaf: %s", this.value, this.children.get().size(),
-						"not init", this.isLeaf());
+				return String.format("value: %s, children: %s, offsets: %s, isLeaf: %s, level: %s", this.value, this.children.get().size(),
+						"not init", this.isLeaf(), this.level);
 
 			}
 		}
-		return String.format("value: %s, size: %s, offsets: %s, isLeaf: %s", this.value, this.children.get().size(),
-				this.offsetStart.get(), this.isLeaf());
+		return String.format("value: %s, size: %s, offsets: %s, isLeaf: %s, level: %s", this.value, this.children.get().size(),
+				this.offsetStart.get(), this.isLeaf(), this.level);
 
 	}
 	
@@ -158,4 +159,11 @@ public class HashNode {
 		return this.value;
 	}
 	
+	public void setLevel(int l) {
+		this.level = l;
+	}
+	
+	public int getLevel() {
+		return this.level;
+	}
 }
