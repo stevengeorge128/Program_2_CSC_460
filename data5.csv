@@ -1,0 +1,10 @@
+runnerId,firstName,bib,age,gender,city,countryCode,overallPlace,overallTime,genderPlace
+41771195,Abdi,7,35,M,Nijmegen,NLD,1,2:07:39,1
+41775746,Evans,3,35,M,Kapsabet,KEN,2,2:07:45,2
+41766254,Albert,2,30,M,Kapkitony,KEN,3,2:08:00,3
+41757406,Geoffrey,6,31,M,Kapchorwa District,KEN,5,2:08:50,5
+41788306,Tom,526,32,M,Boulder,USA,47,2:23:21,47
+41772990,Conner,10,27,M,Provo,USA,6,2:09:00,6
+41763160,Tamirat,1,33,M,Addis Ababa,ETH,4,2:08:12,4
+41791110,Riley,548,27,M,Anchorage,USA,52,2:24:25,52
+

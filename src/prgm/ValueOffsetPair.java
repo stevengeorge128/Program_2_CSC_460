@@ -3,9 +3,9 @@ package prgm;
 public class ValueOffsetPair {
 	
 	private int index;
-	private int offset;
+	private long offset;
 	
-	public void ValueOffsetPair(int i, int o) {
+	public ValueOffsetPair(int i, long o) {
 		this.index = i; // Contain the index value from the binary file
 		this.offset = o; // Contain the byte location in the binary file
 	}
@@ -14,7 +14,7 @@ public class ValueOffsetPair {
 		return this.index;
 	}
 	
-	public int getOffset() {
+	public long getOffset() {
 		return this.offset;
 	}
 

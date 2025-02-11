@@ -1,0 +1,10 @@
+runnerId,firstName,bib,age,gender,city,countryCode,overallPlace,overallTime,genderPlace
+19999999,Alice,1,25,F,CityA,USA,1,2:05:00,1
+29999999,Bob,2,30,M,CityB,USA,2,2:06:00,2
+39999999,Charlie,3,28,M,CityC,USA,3,2:07:00,3
+49999999,David,4,27,M,CityD,USA,4,2:08:00,4
+59999999,Eve,5,26,F,CityE,USA,5,2:09:00,5
+69999999,Frank,6,35,M,CityF,USA,6,2:10:00,6
+79999999,Grace,7,29,F,CityG,USA,7,2:11:00,7
+89999999,Henry,8,31,M,CityH,USA,8,2:12:00,8
+99999999,Ivy,9,33,F,CityI,USA,9,2:13:00,9

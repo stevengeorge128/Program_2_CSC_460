@@ -7,7 +7,6 @@ runnerId,firstName,bib,age,gender,city,countryCode,overallPlace,overallTime,gend
 41772970,Conner,10,27,M,Provo,USA,6,2:09:00,6
 41766336,Clayton,11,31,M,Provo,USA,7,2:09:21,7
 41787073,Abel,9,30,M,Iten,KEN,8,2:10:39,8
-41805730,Bashir,4,35,M,Ghent,BEL,9,2:10:39,9
 41805729,Cj,20,31,M,Fresno,USA,10,2:10:57,10
 41776015,Ryan,32,27,M,Boone,USA,11,2:11:08,11
 41805732,Colin,21,29,M,San Francisco,USA,12,2:11:16,12

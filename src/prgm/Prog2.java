@@ -112,17 +112,59 @@ public class Prog2 {
 			System.exit(-1);
 		}
 
-		System.out.println("Testing tree initialization");
-		System.out.println("Root: " + this.root.toString());
-		for (int i = 0; i < 10; i++) {
-			HashNode temp = root.getChild(i);
-			System.out.println("\t" + temp.toString());
-		}
+//		System.out.println("Testing tree initialization");
+//		System.out.println("Root: " + this.root.toString());
+//		for (int i = 0; i < 10; i++) {
+//			HashNode temp = root.getChild(i);
+//			System.out.println("\t" + temp.toString());
+//		}
 
 		this.readInData();
+		System.out.println("[id][offset][value]");
+		this.printBucketBinFile(this.root);
 		this.tempQuery();
 		this.beginQuerying();
 		this.closeFiles();
+
+	}
+
+	public void printBucketBinFile(HashNode node) {
+//		if (!node.isLeaf()){
+//			
+//			// then call for each child
+//			for (int i = 0; i < 10; i ++) {
+//				this.printBucketBinFile(node.getChild(i));
+//			}
+//		} else {
+//			for (int i = 0; i < node.getDataCount(); i ++) {
+//				long position = node.getOffset() + i * this.bucketFileLineSize;
+//				try {
+//					this.bucketBin.seek(position);
+//					int id = this.bucketBin.readInt();
+//					long offset = this.bucketBin.readLong();
+//					System.out.println(String.format("[%s]\t[%s]\t[%s]", offset, id, node.getValue()));
+//				} catch (IOException e) {
+//					// TODO Auto-generated catch block
+//					e.printStackTrace();
+//				}
+//			}
+//		}
+		try {
+			long length = this.bucketBin.length() / 12;
+			long location = 0;
+			for (int i = 0; i < length; i++) {
+				this.bucketBin.seek(location);
+
+				int id = this.bucketBin.readInt();
+				long offset = this.bucketBin.readLong();
+				System.out.println(String.format("[%s]\t[%s]\t\t[%s]", location, id, offset));
+				location += 12;
+
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
 	}
 
@@ -219,7 +261,7 @@ public class Prog2 {
 
 		try {
 			binFile = new RandomAccessFile("bucket.bin", "rw");
-			binFile.setLength(bucketSize * 10 * 12); // Preallocate initial size
+			binFile.setLength(bucketSize * 10 * this.bucketFileLineSize); // Preallocate initial size
 			return binFile;
 		} catch (FileNotFoundException e) {
 			System.out.println("ERROR: FileNotFoundException - Could not generate bucket binary file");
@@ -309,11 +351,11 @@ public class Prog2 {
 		}
 
 		// All this does is print
-		System.out
-				.println(String.format("There are <%s> fields with line length <%s>", fieldLengths.length, lineLength));
+//		System.out
+//				.println(String.format("There are <%s> fields with line length <%s>", fieldLengths.length, lineLength));
 
 		String[] lineStringList = new String[fieldLengths.length];
-		System.out.println(String.format("Data length excluding headers is <%s>", dataLengthExcludingHeaders));
+//		System.out.println(String.format("Data length excluding headers is <%s>", dataLengthExcludingHeaders));
 		for (long l = 0; l < dataLengthExcludingHeaders; l += lineLength) {
 			this.readBinFileLineIntoArrayList(fieldLengths, lineStringList, l);
 //			for (int k = 0; k < lineStringList.length; k ++) {
@@ -352,6 +394,7 @@ public class Prog2 {
 	 *---------------------------------------------------------------------*/
 	private void addToTree(String[] lineStringList, long positionInDataBinFile) {
 		// Parse the runner id into an integer. Exit if that fails
+		int level = 0;
 		int id;
 		try {
 			id = Integer.parseInt(lineStringList[0]);
@@ -359,40 +402,73 @@ public class Prog2 {
 			System.out.println("ERROR: Runner id not an int");
 			return;
 		}
+
+		// Set up boolean to track if at leaf, idDigit to track the current digit of the
+		// index,
+		// working backwards, and the current node we are at in the tree
+		System.out.println("Initial id in addToTree is " + id);
 		boolean atLeafNode = false;
 		int idDigit = id % 10;
+		int idToDivide = id;
 		HashNode currentNode = root.getChild(idDigit);
 //		System.out.println(String.format("From id <%d> I got hash node <%s>", id, currentNode.toString()));
+
+		// While we have not yet reached the end of the tree
 		while (!atLeafNode) {
+			
 			if (currentNode.isLeaf()) { // If we reached a leaf node stop iterating
+				System.out.println("A for idToDivide " + idToDivide);
 				atLeafNode = true;
-//				System.out.println(String.format("At leaf node for id <%s> and digit <%s>", id, idDigit));
-			} else { // Otherwise move to the next digit in the runner id and the next level of the
-						// tree
+				if (currentNode.getDataCount() == this.bucketSize) { // Resize if the tree if full
+					System.out.println("B");
+
+					System.out.println("Supposed to be resizing");
+					
+					
+					this.resizeNode(currentNode, id, level);
+					atLeafNode = false;
+					idToDivide = idToDivide / 10;
+					idDigit = idToDivide % 10;
+					currentNode = currentNode.getChild(idDigit);
+
+				}
+			} else {
+				System.out.println("C");
+
+				// Otherwise move to the next digit in the runner id and the next level of the
+				// tree.
 //				System.out.println("Not at leaf node ");
 				// STILL NEED TO IMPLEMENT THIS
+//				idToDivide = idToDivide / 10;
+				idDigit = idToDivide % 10;
+				currentNode = currentNode.getChild(idDigit);
+				level++;
+
 			}
 
-			atLeafNode = true;
-		}
-
-		if (currentNode.getDataCount() == this.bucketSize) { // Resize if the tree if full
-			this.resizeNode();
+//			atLeafNode = true;
+			System.out.println("Looping");
 
 		}
+
+		// At this point a leaf node has been reached. Only leaf nodes store actual
+		// references
+		// to elements in the hash bucket binary file.
+
+		// If the current node is full we need to resize it and assign current node to
+		// the
+		// node that should contain the new data
+
+		// then we get the offset of current node in the hashBin file
 		long positionInBinFile = currentNode.getOffset() + (12 * currentNode.getDataCount());
 
-		System.out.println(String.format("Adding id <%s> at position <%s>", id, positionInBinFile));
+//		System.out.println(String.format("Adding id <%s> at position <%s>", id, positionInBinFile));
 
-		try {
-			this.bucketBin.seek(positionInBinFile);
-			this.bucketBin.writeInt(id);
-			this.bucketBin.writeLong(positionInDataBinFile);
-			currentNode.incrDataCount();
-		} catch (IOException e) {
-			System.out.println("ERROR: Could not write to bucket binary file");
-			System.exit(-1);
-		}
+		// Then we seek to this position and write the id and the position in the data
+		// binary file
+		System.out.println("Writing " + id + " at position " + positionInBinFile + " with node of count"
+				+ currentNode.getDataCount());
+		writeIdAndOffsetToBinFile(positionInDataBinFile, id, currentNode, positionInBinFile);
 		// Start at the end of the runner id and find that value in the
 		// First level of the tree.
 		// If that hashnode has bucketSize elements then the bucket is full
@@ -402,6 +478,161 @@ public class Prog2 {
 		// Then we write the runner id and positionInDataBin file to the hash
 		// bucket file
 		// If the hashbucket is full we call resize on the node
+
+	}
+
+	private void writeIdAndOffsetToBinFile(long positionInDataBinFile, int id, HashNode currentNode,
+			long positionInBinFile) {
+		System.out.println(String.format("writeIdAndOffsetToBinFile called for id=<%s>. currentNode=<%s>", id,
+				currentNode.toString()));
+		try {
+			this.bucketBin.seek(positionInBinFile);
+			this.bucketBin.writeInt(id);
+			this.bucketBin.writeLong(positionInDataBinFile);
+			currentNode.incrDataCount();
+		} catch (IOException e) {
+			System.out.println("ERROR: Could not write to bucket binary file");
+			System.exit(-1);
+		}
+	}
+
+	private void resizeNode(HashNode node, int id, int level) {
+		String idString = String.valueOf(id);
+		if (level >= idString.length()) {
+//			level = idString.length() -1;
+			this.printBucketBinFile(root);
+			System.out.println(String.format("ERROR: Invalid index in runner id for level <%s> and idString <%s>", level, idString));
+			System.exit(-1);
+		}
+		
+		// TODO Auto-generated method stub
+		// Iterate through every element in the current bin file from this node and sort
+		// it
+		// into 10 array lists
+		// Would be nice to keep track of the level
+		// Consider the case where we run out of positions
+		// Create 10 children for the current node and set it as not a
+		// a leaf
+		// Seek the end of the binary file.
+		// Extend the end of the binary file
+		// Assign the 10 slots to the new 10 leaf nodes
+		// Iterate through each sorted array list
+		// Add the elements to the appropriate bucket.
+		// Want to make sure no bucket is already full
+		// Cover this case where say, we have 2 elemens that end in the same two digits
+		// and add
+		// another element that is included in theese last two element. If we resize we
+		// will
+		// run in to the same issue and need to resize again
+		// Probably should check that we do not have the same id's at any point as this
+		// would
+		// cause an issue. Maybe print a warning. Maybe do nothing
+		// Then we add the new element which should be existing code
+		System.out.println(
+				String.format("Calling resize for elem <%s> on level <%s> for node <%s>", id, level, node.toString()));
+
+		// ArrayList to contain each id and offset from the portion of the has bucket
+		// file
+		// that are being resized
+		ArrayList<ValueOffsetPair> dataFromHashBin = new ArrayList<>(this.bucketSize);
+		// Get the offset of the node and how many elements it references
+		long currentOffset = node.getOffset();
+		int elemInNode = node.getDataCount();
+		int idFromHashBin;
+		long offsetFromHashBin;
+		try {
+			// Move to each of those elements and for each one, read the data from the
+			// binary
+			// file and store in in dataFromHashBin
+			this.bucketBin.seek(currentOffset);
+			for (int i = 0; i < elemInNode; i++) {
+				idFromHashBin = this.bucketBin.readInt();
+				offsetFromHashBin = this.bucketBin.readLong();
+				dataFromHashBin.add(new ValueOffsetPair(idFromHashBin, offsetFromHashBin));
+
+			}
+		} catch (Exception e) {
+			System.out.println("ERROR: Could not read from hash bucket binary file while resizing");
+		}
+
+		// Print out the elements that are being resized
+		System.out.println("Resizing the following elements");
+		for (ValueOffsetPair pair : dataFromHashBin) {
+			System.out.println(String.format("\t<%s><%s>", pair.getIndex(), pair.getOffset()));
+		}
+
+		// Set the node to empty as it not longer is a leaf and create its 10 children
+		node.setEmpty();
+		node.createChildren();
+		System.out.println(String.format("After finding elements to store we have node as <%s>", node.toString()));
+
+		// Initialize variables to mark the start and end bytes of the children in the
+		// hash bucket binary file
+		long childrenStart = 0;
+		long childrenEnd = 0;
+		try {
+			// Find the start and end locations of these 10 children and seek to that
+			// location
+			childrenStart = this.bucketBin.length();
+			childrenEnd = childrenStart + bucketSize * 10 * this.bucketFileLineSize;
+			this.bucketBin.seek(childrenEnd);
+			System.out.println("Resizing the file to have " + childrenEnd + " bytes from " + childrenStart + " bytes");
+
+		} catch (IOException e) {
+			System.out.println("ERROR: Could not extend hash bucket binary file");
+			System.exit(-1);
+//			e.printStackTrace();
+		}
+		// Create the children offsets in this location
+		this.setChildrenOffsets(node, childrenStart, childrenEnd);
+
+		// For each child write their info from dataFromHashBin into the hash bucket
+		// binary file
+
+		System.out.println("We are looking at this digit in the id's workign from the back " + level);
+		System.out.println("Checking that new offsets have been correctly made");
+		for (int i = 0; i < 10; i++) {
+			HashNode temp = node.getChild(i);
+			System.out.println("\t" + temp.toString());
+
+		}
+
+//		long positionInBinFile = currentNode.getOffset() + (12 * currentNode.getDataCount());
+//		writeIdAndOffsetToBinFile(positionInDataBinFile, id, currentNode, positionInBinFile);
+		int substringStart;
+		String indexString;
+		HashNode leafNodeToAddTo;
+		long positionInBinFile;
+
+		for (ValueOffsetPair p : dataFromHashBin) {
+			// Get the id from the pair, convert it to String and get the digit we are one
+			// using
+			// level then convert that back to an int
+			indexString = String.valueOf(p.getIndex());
+			substringStart = indexString.length() - 1 - level;
+			String relevantDigitString = null;
+			try {
+				relevantDigitString = indexString.substring(substringStart, substringStart + 1);
+			} catch (Exception e) {
+				this.printBucketBinFile(root);
+				System.out.println(String.format("ERROR: Could not call substring for <%s> with index <%s> and level <%s>",
+						indexString, substringStart, level));
+				e.printStackTrace();
+				System.exit(-1);
+			}
+			int relevantDigit = Integer.parseInt(relevantDigitString);
+			System.out.println(String.format("For <%s> being resized we are looking at index <%s> or digit <%s>",
+					indexString, substringStart, relevantDigitString));
+
+			// Then get the node we are adding to using that digit and
+			// find the position we should add our data to in the hash bucket bin file
+			// and add it using writeIdAndOffsetToBinFile
+			leafNodeToAddTo = node.getChild(relevantDigit);
+			System.out.println("For this string got node " + leafNodeToAddTo.toString());
+			positionInBinFile = leafNodeToAddTo.getOffset() + (12 * leafNodeToAddTo.getDataCount());
+			System.out.println("Writing " + p.getIndex() + " and " + p.getOffset());
+			writeIdAndOffsetToBinFile(p.getOffset(), p.getIndex(), leafNodeToAddTo, positionInBinFile);
+		}
 
 	}
 
@@ -437,10 +668,10 @@ public class Prog2 {
 						boolean found = false;
 						HashNode currentNode = root.getChild(digit);
 						while (!found) {
-							// If we reached a leaf node then we just 
+							// If we reached a leaf node then we just
 							// print that node
 							System.out.println("In query inner loop");
-							// If we reached the end of the query but not a leaf 
+							// If we reached the end of the query but not a leaf
 							// node then we just print all leaf nodes attached
 							if (length == 0) {
 								found = true;
@@ -450,14 +681,14 @@ public class Prog2 {
 								found = true;
 								this.printNodeResults(runnerId, currentNode);
 
-							} 
-							
-							
-							
-							temp = temp / 10;
-							digit = temp % 10;
-							length --;
-							
+							} else {
+								temp = temp / 10;
+								digit = temp % 10;
+								length--;
+								currentNode = currentNode.getChild(digit);
+
+							}
+
 						}
 						///////////
 					}
@@ -474,26 +705,27 @@ public class Prog2 {
 	}
 
 	private void printNodeResults(int query, HashNode node) {
-		
+		System.out.println("printNodeResults called");
 		if (node.isLeaf()) {
 			this.printNodeResultsHelper(query, node);
 		}
-		
-		
+
 	}
 
 	private void printNodeResultsHelper(int query, HashNode node) {
+		System.out.println("printNodeResultsHelper called");
+
 		ArrayList<ValueOffsetPair> listOfResults = new ArrayList<ValueOffsetPair>(100);
 //		long[] listOfRes = new long[100];
 		ArrayList<Long> listOfRes = new ArrayList<Long>(100);
-		int k = 0; 
+		int k = 0;
 		int id;
 		String queryString = String.valueOf(query);
 		String idString;
 		long indexInDataBin;
 		long offset = node.getOffset();
-		// Print each 
-		for (int i = 0; i < node.getDataCount(); i ++) {
+		// Print each
+		for (int i = 0; i < node.getDataCount(); i++) {
 			System.out.println("Loop A");
 			try {
 				this.bucketBin.seek(offset);
@@ -508,46 +740,38 @@ public class Prog2 {
 //					listOfResults.add(new ValueOffsetPair(id, indexInDataBin));
 //					listOfRes[k] = indexInDataBin;
 					listOfRes.add(indexInDataBin);
-					k ++;
+					k++;
 				}
-				
+
 //				System.out.println(String.format("[%s][%s]", id, indexInDataBin));
-				
+
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			
+
 			offset += this.bucketFileLineSize;
-			
+
 		}
-		
-		
+
 		this.printPositionArray(listOfRes);
-		
+
 	}
-	
+
 	private void printPositionArray(ArrayList<Long> arr) {
 		String[] lineStringArr = new String[this.fieldLengths.length];
-		for (int i = 0; i < arr.size(); i ++) {
+		for (int i = 0; i < arr.size(); i++) {
 			System.out.println("Loop B - " + arr.size());
 
 			this.readBinFileLineIntoArrayList(this.fieldLengths, lineStringArr, arr.get(i));
-			for (int k = 0; k < lineStringArr.length; k ++) {
-				
+			for (int k = 0; k < lineStringArr.length; k++) {
 
 				System.out.print(String.format("[%s]", lineStringArr[k]));
-				
+
 			}
 			System.out.print("Loop C");
 			System.out.println();
 		}
-	}
-	
-	
-	private void resizeNode() {
-		// TODO Auto-generated method stub
-
 	}
 
 	/*---------------------------------------------------------------------

@@ -1,0 +1,25 @@
+runnerId,firstName,bib,age,gender,city,countryCode,overallPlace,overallTime,genderPlace
+41771195,Abdi,7,35,M,Nijmegen,NLD,1,2:07:39,1
+41775746,Evans,3,35,M,Kapsabet,KEN,2,2:07:45,2
+41766254,Albert,2,30,M,Kapkitony,KEN,3,2:08:00,3
+41763160,Tamirat,1,33,M,Addis Ababa,ETH,4,2:08:12,4
+41757406,Geoffrey,6,31,M,Kapchorwa District,KEN,5,2:08:50,5
+41772970,Conner,10,27,M,Provo,USA,6,2:09:00,6
+41766336,Clayton,11,31,M,Provo,USA,7,2:09:21,7
+41787073,Abel,9,30,M,Iten,KEN,8,2:10:39,8
+41805730,Bashir,4,35,M,Ghent,BEL,9,2:10:39,9
+41805729,Cj,20,31,M,Fresno,USA,10,2:10:57,10
+41776015,Ryan,32,27,M,Boone,USA,11,2:11:08,11
+41805732,Colin,21,29,M,San Francisco,USA,12,2:11:16,12
+41772969,Frank,27,29,M,Boulder,USA,13,2:11:21,13
+41753910,Jonny,16,37,M,Liverpool,GBR,14,2:11:22,14
+41769644,Rory,12,28,M,Flagstaff,USA,15,2:11:45,15
+41805735,Wesley,23,28,M,Flagstaff,USA,16,2:11:58,16
+41760779,Futsum,17,31,M,Flagstaff,USA,17,2:12:32,17
+41805739,Joel,24,31,M,Saint Paul,USA,18,2:12:52,18
+41771194,Elkanah,15,41,M,Colorado Springs,USA,19,2:13:27,19
+41805728,Ryan,30,38,M,Boston,USA,20,2:13:36,20
+41758754,Teshome,22,29,M,New York,USA,21,2:14:12,21
+41805733,Addisu,8,20,M,Addis Ababa,ETH,22,2:14:49,22
+41760248,Callum,14,32,M,Elderslie,GBR,23,2:15:12,23
+41805734,Josh,26,34,M,Boone,USA,24,2:16:58,24

@@ -112,23 +112,23 @@ public class HashNode {
 	public String toString() {
 		if (this.children.isEmpty()) { // If no children 
 			if (this.offsetStart.isEmpty()) { // And if not offset
-				return String.format("value: %s, children: %s, offsets: %s", this.value, "not init",
-						"not init");
+				return String.format("value: %s, children: %s, offsets: %s, isLeaf: %s", this.value, "not init",
+						"not init", this.isLeaf());
 
 			} else {
-				return String.format("value: %s, children: %s, offsets: %s", this.value, "not init",
-						this.offsetStart.get());
+				return String.format("value: %s, children: %s, offsets: %s, isLeaf: %s", this.value, "not init",
+						this.offsetStart.get(), this.isLeaf());
 
 			}
 		} else {
 			if (this.offsetStart.isEmpty()) {
-				return String.format("value: %s, children: %s, offsets: %s", this.value, this.children.get().size(),
-						"not init");
+				return String.format("value: %s, children: %s, offsets: %s, isLeaf: %s", this.value, this.children.get().size(),
+						"not init", this.isLeaf());
 
 			}
 		}
-		return String.format("value: %s, size: %s, offsets: %s", this.value, this.children.get().size(),
-				this.offsetStart.get());
+		return String.format("value: %s, size: %s, offsets: %s, isLeaf: %s", this.value, this.children.get().size(),
+				this.offsetStart.get(), this.isLeaf());
 
 	}
 	
@@ -147,5 +147,15 @@ public class HashNode {
 	public void incrDataCount() {
 		this.currentDataCount ++ ;
 	}
-
+	
+	public void setEmpty() {
+		this.children = Optional.empty();
+		this.offsetStart = Optional.empty();
+		
+	}
+	
+	public int getValue() {
+		return this.value;
+	}
+	
 }
