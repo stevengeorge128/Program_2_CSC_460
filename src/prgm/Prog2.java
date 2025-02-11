@@ -12,7 +12,7 @@ public class Prog2 {
 	private HashNode root;
 	private RandomAccessFile bucketBin;
 	private RandomAccessFile dataBin;
-	private int bucketSize = 2;
+	private int bucketSize = 100;
 	private int bucketFileLineSize = 12;
 	private int[] fieldLengths;
 
@@ -120,8 +120,8 @@ public class Prog2 {
 //		}
 
 		this.readInData();
-		System.out.println("[id][offset][value]");
-		this.printBucketBinFile(this.root);
+//		System.out.println("[id][offset][value]");
+//		this.printBucketBinFile(this.root);
 		this.tempQuery();
 		this.beginQuerying();
 		this.closeFiles();
@@ -157,7 +157,7 @@ public class Prog2 {
 
 				int id = this.bucketBin.readInt();
 				long offset = this.bucketBin.readLong();
-				System.out.println(String.format("[%s]\t[%s]\t\t[%s]", location, id, offset));
+//				System.out.println(String.format("[%s]\t[%s]\t\t[%s]", location, id, offset));
 				location += 12;
 
 			}
@@ -519,10 +519,10 @@ public class Prog2 {
 
 //					System.out.println("Supposed to be resizing");
 					
-					System.out.println(String.format("Calling resize for id <%s>, idToDivid<%s>, digit <%s>, and node<%s>", 
-							id, idToDivide, idDigit, currentNode.toString()));
+//					System.out.println(String.format("Calling resize for id <%s>, idToDivid<%s>, digit <%s>, and node<%s>", 
+//							id, idToDivide, idDigit, currentNode.toString()));
 					this.resizeNode(currentNode, id, level + 1);
-					this.printBucketBinFile(root);
+//					this.printBucketBinFile(root);
 					atLeafNode = false;
 					idToDivide = idToDivide / 10;
 					idDigit = idToDivide % 10;
@@ -544,7 +544,7 @@ public class Prog2 {
 			}
 			level ++;
 //			atLeafNode = true;
-			System.out.println("Looping");
+//			System.out.println("Looping");
 
 		}
 
@@ -740,7 +740,7 @@ public class Prog2 {
 		String idString = String.valueOf(id);
 		if (level > idString.length()) {
 //			level = idString.length() -1;
-			this.printBucketBinFile(root);
+//			this.printBucketBinFile(root);
 			System.out.println(String.format("ERROR: Invalid index in runner id for level <%s> and idString <%s>", level, idString));
 			System.exit(-1);
 		}
@@ -796,10 +796,10 @@ public class Prog2 {
 		}
 
 		// Print out the elements that are being resized
-		System.out.println("Resizing the following elements");
-		for (ValueOffsetPair pair : dataFromHashBin) {
-			System.out.println(String.format("\t<%s><%s>", pair.getIndex(), pair.getOffset()));
-		}
+//		System.out.println("Resizing the following elements");
+//		for (ValueOffsetPair pair : dataFromHashBin) {
+//			System.out.println(String.format("\t<%s><%s>", pair.getIndex(), pair.getOffset()));
+//		}
 
 		// Set the node to empty as it not longer is a leaf and create its 10 children
 		node.setEmpty();
@@ -831,11 +831,11 @@ public class Prog2 {
 
 //		System.out.println("We are looking at this digit in the id's workign from the back " + level);
 //		System.out.println("Checking that new offsets have been correctly made");
-		for (int i = 0; i < 10; i++) {
-			HashNode temp = node.getChild(i);
-			System.out.println("\t" + temp.toString());
-
-		}
+//		for (int i = 0; i < 10; i++) {
+//			HashNode temp = node.getChild(i);
+//			System.out.println("\t" + temp.toString());
+//
+//		}
 
 //		long positionInBinFile = currentNode.getOffset() + (12 * currentNode.getDataCount());
 //		writeIdAndOffsetToBinFile(positionInDataBinFile, id, currentNode, positionInBinFile);
@@ -854,7 +854,7 @@ public class Prog2 {
 			try {
 				relevantDigitString = indexString.substring(substringStart, substringStart + 1);
 			} catch (Exception e) {
-				this.printBucketBinFile(root);
+//				this.printBucketBinFile(root);
 				System.out.println(String.format("ERROR: Could not call substring for <%s> with index <%s> and level <%s>",
 						indexString, substringStart, level));
 				e.printStackTrace();
@@ -910,7 +910,7 @@ public class Prog2 {
 						while (!found) {
 							// If we reached a leaf node then we just
 							// print that node
-							System.out.println("In query inner loop");
+//							System.out.println("In query inner loop");
 							// If we reached the end of the query but not a leaf
 							// node then we just print all leaf nodes attached
 							if (length == 0) {
@@ -945,15 +945,58 @@ public class Prog2 {
 	}
 
 	private void printNodeResults(int query, HashNode node) {
-		System.out.println("printNodeResults called");
+//		System.out.println("printNodeResults called");
 		if (node.isLeaf()) {
-			this.printNodeResultsHelper(query, node);
+//			this.printNodeResultsHelper(query, node);
+//			System.out.println("printNodeResultsHelper called");
+
+			ArrayList<ValueOffsetPair> listOfResults = new ArrayList<ValueOffsetPair>(100);
+//			long[] listOfRes = new long[100];
+			ArrayList<Long> listOfRes = new ArrayList<Long>(100);
+			int k = 0;
+			int id;
+			String queryString = String.valueOf(query);
+			String idString;
+			long indexInDataBin;
+			long offset = node.getOffset();
+			// Print each
+			for (int i = 0; i < node.getDataCount(); i++) {
+//				System.out.println("Loop A");
+				try {
+					this.bucketBin.seek(offset);
+					id = this.bucketBin.readInt();
+//					offset += 4;
+					indexInDataBin = this.bucketBin.readLong();
+					idString = String.valueOf(id);
+//					System.out.println("queryString: " + queryString);
+//					System.out.println("idString: " + idString);
+
+					if (idString.endsWith(queryString)) {
+//						listOfResults.add(new ValueOffsetPair(id, indexInDataBin));
+//						listOfRes[k] = indexInDataBin;
+						listOfRes.add(indexInDataBin);
+						k++;
+					}
+
+//					System.out.println(String.format("[%s][%s]", id, indexInDataBin));
+
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+
+				offset += this.bucketFileLineSize;
+
+			}
+
+			this.printPositionArray(listOfRes);
+
 		}
 
 	}
 
 	private void printNodeResultsHelper(int query, HashNode node) {
-		System.out.println("printNodeResultsHelper called");
+//		System.out.println("printNodeResultsHelper called");
 
 		ArrayList<ValueOffsetPair> listOfResults = new ArrayList<ValueOffsetPair>(100);
 //		long[] listOfRes = new long[100];
@@ -966,7 +1009,7 @@ public class Prog2 {
 		long offset = node.getOffset();
 		// Print each
 		for (int i = 0; i < node.getDataCount(); i++) {
-			System.out.println("Loop A");
+//			System.out.println("Loop A");
 			try {
 				this.bucketBin.seek(offset);
 				id = this.bucketBin.readInt();
@@ -1001,7 +1044,7 @@ public class Prog2 {
 	private void printPositionArray(ArrayList<Long> arr) {
 		String[] lineStringArr = new String[this.fieldLengths.length];
 		for (int i = 0; i < arr.size(); i++) {
-			System.out.println("Loop B - " + arr.size());
+//			System.out.println("Loop B - " + arr.size());
 
 			this.readBinFileLineIntoArrayList(this.fieldLengths, lineStringArr, arr.get(i));
 			for (int k = 0; k < lineStringArr.length; k++) {
@@ -1009,8 +1052,7 @@ public class Prog2 {
 				System.out.print(String.format("[%s]", lineStringArr[k]));
 
 			}
-			System.out.print("Loop C");
-			System.out.println();
+			System.out.println(); // KEEP THIS FOR ADDING NEW LINE TO OUTPUT
 		}
 	}
 
