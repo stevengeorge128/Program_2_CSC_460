@@ -13,6 +13,7 @@ public class HashNode {
 	private Optional<ArrayList<HashNode>> children = Optional.empty();
 	private int currentDataCount = 0;
 	private int level = -1;
+	private boolean isLeaf = true;
 //	private ArrayList<indexOffsetPair> indexOffsetPairArray = null; // Probably do not want to use this. Actually what I am saying is
 	// that this should only exists for resizing.
 
@@ -52,6 +53,7 @@ public class HashNode {
 
 		} else if (createChildren) { // Otherwise create its children
 			this.children = Optional.of(new ArrayList<HashNode>(10));
+			this.isLeaf = false;
 			for (int i = 0; i < 10; i++) {
 				// Set children to nodes without file pointer or children
 				this.children.get().set(i, new HashNode(null, false, i));
@@ -103,6 +105,7 @@ public class HashNode {
 		for (int i = 0; i < 10; i++) {
 			this.children.get().add(new HashNode(null, false, i));
 		}
+		this.isLeaf = false;
 	}
 
 	public HashNode getChild(int i) {
@@ -134,7 +137,8 @@ public class HashNode {
 	}
 	
 	public boolean isLeaf() {
-		return this.children.isEmpty();
+		return this.isLeaf;
+//		return this.children.isEmpty();
 	}
 	
 	public int getDataCount() {
@@ -152,6 +156,7 @@ public class HashNode {
 	public void setEmpty() {
 		this.children = Optional.empty();
 		this.offsetStart = Optional.empty();
+		this.isLeaf = false;
 		
 	}
 	
