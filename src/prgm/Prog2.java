@@ -14,7 +14,7 @@ public class Prog2 {
 	private HashNode root;
 	private RandomAccessFile bucketBin;
 	private RandomAccessFile dataBin;
-	private int bucketSize = 2;
+	private int bucketSize = 100;
 	private int bucketFileLineSize = 12;
 	private int[] fieldLengths;
 
@@ -1272,12 +1272,13 @@ public class Prog2 {
 				if (idStringFromBin.endsWith(query)) {
 					
 					this.readBinFileLineIntoArrayList(this.fieldLengths, lineStringArr, offsetInDataBin);
-					for (int k = 0; k < lineStringArr.length; k++) {
-						printed = true;
-						System.out.print(String.format("[%s]", lineStringArr[k]));
-
-					}
-					System.out.println(); // KEEP THIS FOR ADDING NEW LINE TO OUTPUT
+//					for (int k = 0; k < lineStringArr.length; k++) {
+//						printed = true;
+//						System.out.print(String.format("[%s]", lineStringArr[k]));
+//
+//					}
+					System.out.println(lineStringArr[0]);
+//					System.out.println(); // KEEP THIS FOR ADDING NEW LINE TO OUTPUT
 				}
 				
 			}
